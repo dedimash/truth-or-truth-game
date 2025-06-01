@@ -165,7 +165,7 @@
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <label>שחקנים (<span id="player-count">4</span>):</label>
+                    <label>שחקנים (<span id="player-count">2</span>):</label>
                     <div id="players-setup"></div>
                     <button id="add-player" class="btn">הוסף שחקן +</button>
                 </div>
@@ -234,20 +234,22 @@
         </div>
     </div>
     
+    <!-- Load questions from external files -->
+    <script src="questions.js"></script>
+    <script src="questions2.js"></script>
+    
     <script>
-        // Game questions - personal questions about the player
-        const questions = [
-            { q: "מה החלום של [PLAYER] להיות כשיגדל/תגדל?", options: ["רופא/ה", "מורה", "ספורטאי/ת", "שחקן/ית", "יוטיובר/ית", "מוזיקאי/ת", "מתכנת/ת", "טייס/ת", "וטרינר/ית"] },
-            { q: "איזה מקצוע בבית ספר [PLAYER] הכי אוהב/ת?", options: ["מתמטיקה", "אנגלית", "ספורט", "מדעים", "היסטוריה", "מוזיקה", "אמנות", "שפה", "מחשבים", "גיאוגרפיה"] },
-            { q: "איזה חוג [PLAYER] משתתף/ת בו?", options: ["כדורגל", "ריקוד", "מוזיקה", "אמנות", "שחייה", "מחשבים", "תיאטרון", "אין חוג", "ג'ודו", "כדורסל"] },
-            { q: "מה [PLAYER] הכי אוהב/ת לעשות בהפסקות?", options: ["לשחק כדור", "לדבר עם חברים", "לאכול", "לשחק בטלפון", "לקרוא ספר", "לנוח", "להכין שיעורים", "להסתובב בחוץ", "לצייר", "לשמוע מוזיקה"] },
-            { q: "איזה סוג סרטים [PLAYER] הכי אוהב/ת?", options: ["קומדיה", "אקשן", "מדע בדיוני", "אנימציה", "הרפתקאות", "סרטי גיבורי על", "דרמה", "מתח", "אימה", "רומנטיקה"] },
-            { q: "מה המאכל האהוב על [PLAYER]?", options: ["פיצה", "המבורגר", "פסטה", "שניצל", "סושי", "סלט", "אורז", "תפוחי אדמה", "גלידה", "שוקולד"] },
-            { q: "לאן [PLAYER] הכי רוצה לטייל בעולם?", options: ["ארה\"ב", "יפן", "איטליה", "אוסטרליה", "צרפת", "אנגליה", "ספרד", "ברזיל", "קנדה", "הודו"] },
-            { q: "איזו חיה [PLAYER] הכי אוהב/ת?", options: ["כלב", "חתול", "סוס", "דולפין", "אריה", "פנדה", "קוף", "ג'ירפה", "פיל", "נשר"] },
-            { q: "מה התחביב האהוב על [PLAYER]?", options: ["ספורט", "משחקי מחשב", "קריאה", "ציור", "מוזיקה", "בישול", "ריקוד", "טיולים", "אופניים", "שחייה"] },
-            { q: "מה [PLAYER] הכי אוהב/ת לעשות בסוף שבוע?", options: ["לישון", "לצאת עם חברים", "לראות טלוויזיה", "לשחק במחשב", "לטייל", "לבקר משפחה", "לקרוא ספר", "לעשות ספורט", "לבשל", "לנוח"] }
-        ];
+        // Combine all questions
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof questions2 !== 'undefined') {
+                // Use push with spread operator instead of reassigning
+                questions.push(...questions2);
+                console.log(`Loaded ${questions.length} total questions`);
+            }
+        });
+    </script>
+    
+    <script>
         
         // Game state
         let players = [];
@@ -270,12 +272,10 @@
         
         // Initialize game
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize with 4 players
+            // Initialize with 2 players
             players = [
                 { id: 0, name: "שחקן 1", score: 0 },
-                { id: 1, name: "שחקן 2", score: 0 },
-                { id: 2, name: "שחקן 3", score: 0 },
-                { id: 3, name: "שחקן 4", score: 0 }
+                { id: 1, name: "שחקן 2", score: 0 }
             ];
             
             updatePlayersSetup();
@@ -367,7 +367,7 @@
                 
                 div.appendChild(input);
                 
-                if (players.length > 4) {
+                if (players.length > 2) {
                     const removeBtn = document.createElement('button');
                     removeBtn.textContent = '✕';
                     removeBtn.className = 'btn btn-danger';
