@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אמת או אמת</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #8a2be2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bottle-icon {
+            display: inline-block;
+            animation: wobble 2s infinite;
+            margin-right: 10px;
+            font-size: 1.5em;
+        }
+        
+        @keyframes wobble {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-15deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .bottle {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+            position: relative;
+            cursor: pointer;
+            transform-origin: center center;
+            font-size: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Removed the red triangle */
+        
+        .spinning {
+            animation: spin 3s ease-out forwards;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(3600deg); }
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .player-card {
+            display: inline-block;
+            width: 120px;
+            margin: 5px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .player-card.current {
+            background-color: #fff8e1;
+            border: 2px solid #ffd54f;
+        }
+        
+        .question-card {
+            background-color: #fff9c4;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            max-width: 500px;
+            text-align: right;
+        }
+        
+        .answer-input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border: 2px solid #4a90e2;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .choices-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="bottle-icon">🍾</span> אמת או אמת <span class="bottle-icon">🍾</span></h1>
+        <p style="margin-top: -10px; color: #666;">משחק מאת שליו משיח</p>
+        
+        <!-- Setup Screen -->
+        <div id="setup-screen">
+            <div class="card">
+                <h2>הגדרות משחק</h2>
+                
+                <div style="margin-bottom: 15px;">
+                    <label>מספר סיבובים:</label>
+                    <div>
+                        <button class="btn round-btn" data-rounds="5">5</button>
+                        <button class="btn round-btn" data-rounds="10">10</button>
+                        <button class="btn round-btn" data-rounds="15">15</button>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label>שחקנים (<span id="player-count">4</span>):</label>
+                    <div id="players-setup"></div>
+                    <button id="add-player" class="btn">הוסף שחקן +</button>
+                </div>
+                
+                <button id="start-game" class="btn btn-success">התחל משחק! 🚀</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div>סיבוב <span id="current-round">1</span> מתוך <span id="total-rounds">10</span></div>
+                    <div>שלב: <span id="current-stage">סיבוב הבקבוק</span></div>
+                </div>
+                <div id="players-grid"></div>
+                <button id="reset-game-button" class="btn btn-warning">אפס משחק והתחל מחדש 🔄</button>
+            </div>
+            
+            <!-- Spin Stage -->
+            <div id="spin-stage" class="card">
+                <p>לחץ על הבקבוק וראה על מי הוא ייפול!</p>
+                <div id="bottle" class="bottle">
+                    🍾
+                </div>
+            </div>
+            
+            <!-- Question Stage -->
+            <div id="question-stage" class="card hidden">
+                <p id="question-instruction">שאלה ל<span id="current-player-name"></span>:</p>
+                <div class="question-card">
+                    <div id="question-text"></div>
+                    <input type="text" id="answer-input" class="answer-input" placeholder="הקלד את תשובתך כאן...">
+                    <button id="submit-answer" class="btn btn-success" style="margin-top: 15px;">שלח תשובה</button>
+                    <div style="margin-top: 10px; color: #795548;">
+                        <span>🔒</span>
+                        <span>רק אתה רואה את השאלה הזו. ענה בלי שאף אחד יראה.</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Guess Stage -->
+            <div id="guess-stage" class="card hidden">
+                <p>נחשו מה <span id="guess-player-name"></span> ענה לשאלה:</p>
+                <div id="guess-question" style="font-weight: bold; margin-bottom: 10px;"></div>
+                <div id="guess-choices"></div>
+            </div>
+            
+            <!-- Results Stage -->
+            <div id="results-stage" class="card hidden">
+                <h2>תוצאות הסיבוב</h2>
+                <p>השאלה: <span id="result-question"></span></p>
+                <p><span id="result-player-name"></span> ענה: <span id="player-answer-text"></span></p>
+                <div id="guesses-results"></div>
+                <p><span id="points-earned"></span></p>
+                <button id="next-round" class="btn btn-success">סיבוב הבא ⏭️</button>
+            </div>
+            
+            <!-- Game Over -->
+            <div id="game-over" class="card hidden">
+                <h2>המשחק הסתיים!</h2>
+                <div id="final-scores"></div>
+                <button id="new-game" class="btn btn-success">משחק חדש 🎮</button>
+                <button id="reset-game" class="btn btn-warning" style="margin-top: 10px;">אפס משחק והתחל מחדש 🔄</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game questions - personal questions about the player
+        const questions = [
+            { q: "מה החלום של [PLAYER] להיות כשיגדל/תגדל?", options: ["רופא/ה", "מורה", "ספורטאי/ת", "שחקן/ית", "יוטיובר/ית", "מוזיקאי/ת", "מתכנת/ת", "טייס/ת", "וטרינר/ית"] },
+            { q: "איזה מקצוע בבית ספר [PLAYER] הכי אוהב/ת?", options: ["מתמטיקה", "אנגלית", "ספורט", "מדעים", "היסטוריה", "מוזיקה", "אמנות", "שפה", "מחשבים", "גיאוגרפיה"] },
+            { q: "איזה חוג [PLAYER] משתתף/ת בו?", options: ["כדורגל", "ריקוד", "מוזיקה", "אמנות", "שחייה", "מחשבים", "תיאטרון", "אין חוג", "ג'ודו", "כדורסל"] },
+            { q: "מה [PLAYER] הכי אוהב/ת לעשות בהפסקות?", options: ["לשחק כדור", "לדבר עם חברים", "לאכול", "לשחק בטלפון", "לקרוא ספר", "לנוח", "להכין שיעורים", "להסתובב בחוץ", "לצייר", "לשמוע מוזיקה"] },
+            { q: "איזה סוג סרטים [PLAYER] הכי אוהב/ת?", options: ["קומדיה", "אקשן", "מדע בדיוני", "אנימציה", "הרפתקאות", "סרטי גיבורי על", "דרמה", "מתח", "אימה", "רומנטיקה"] },
+            { q: "מה המאכל האהוב על [PLAYER]?", options: ["פיצה", "המבורגר", "פסטה", "שניצל", "סושי", "סלט", "אורז", "תפוחי אדמה", "גלידה", "שוקולד"] },
+            { q: "לאן [PLAYER] הכי רוצה לטייל בעולם?", options: ["ארה\"ב", "יפן", "איטליה", "אוסטרליה", "צרפת", "אנגליה", "ספרד", "ברזיל", "קנדה", "הודו"] },
+            { q: "איזו חיה [PLAYER] הכי אוהב/ת?", options: ["כלב", "חתול", "סוס", "דולפין", "אריה", "פנדה", "קוף", "ג'ירפה", "פיל", "נשר"] },
+            { q: "מה התחביב האהוב על [PLAYER]?", options: ["ספורט", "משחקי מחשב", "קריאה", "ציור", "מוזיקה", "בישול", "ריקוד", "טיולים", "אופניים", "שחייה"] },
+            { q: "מה [PLAYER] הכי אוהב/ת לעשות בסוף שבוע?", options: ["לישון", "לצאת עם חברים", "לראות טלוויזיה", "לשחק במחשב", "לטייל", "לבקר משפחה", "לקרוא ספר", "לעשות ספורט", "לבשל", "לנוח"] }
+        ];
+        
+        // Game state
+        let players = [];
+        let currentRound = 1;
+        let totalRounds = 10;
+        let currentPlayer = null;
+        let currentQuestionIndex = null;
+        let currentAnswer = null;
+        let playerGuesses = {};
+        
+        // DOM elements
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const spinStage = document.getElementById('spin-stage');
+        const questionStage = document.getElementById('question-stage');
+        const guessStage = document.getElementById('guess-stage');
+        const resultsStage = document.getElementById('results-stage');
+        const gameOver = document.getElementById('game-over');
+        const bottle = document.getElementById('bottle');
+        
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize with 4 players
+            players = [
+                { id: 0, name: "שחקן 1", score: 0 },
+                { id: 1, name: "שחקן 2", score: 0 },
+                { id: 2, name: "שחקן 3", score: 0 },
+                { id: 3, name: "שחקן 4", score: 0 }
+            ];
+            
+            updatePlayersSetup();
+            
+            // Set up event listeners
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    totalRounds = parseInt(this.dataset.rounds);
+                    document.querySelectorAll('.round-btn').forEach(b => b.classList.remove('btn-success'));
+                    this.classList.add('btn-success');
+                });
+            });
+            
+            document.getElementById('add-player').addEventListener('click', function() {
+                if (players.length < 8) {
+                    players.push({ id: players.length, name: `שחקן ${players.length + 1}`, score: 0 });
+                    updatePlayersSetup();
+                }
+                
+                if (players.length >= 8) {
+                    this.disabled = true;
+                }
+            });
+            
+            document.getElementById('start-game').addEventListener('click', startGame);
+            bottle.addEventListener('click', spinBottle);
+            document.getElementById('submit-answer').addEventListener('click', submitAnswer);
+            document.getElementById('next-round').addEventListener('click', nextRound);
+            document.getElementById('new-game').addEventListener('click', function() {
+                setupScreen.style.display = 'block';
+                gameScreen.classList.add('hidden');
+                currentRound = 1;
+                players.forEach(p => p.score = 0);
+            });
+            
+            // Reset game buttons
+            document.getElementById('reset-game-button').addEventListener('click', resetGame);
+            document.getElementById('reset-game').addEventListener('click', resetGame);
+            
+            // Set default rounds
+            document.querySelector('.round-btn[data-rounds="10"]').classList.add('btn-success');
+            
+            // Add enter key support for answer input
+            document.getElementById('answer-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitAnswer();
+                }
+            });
+        });
+        
+        function resetGame() {
+            // Reset all game state
+            currentRound = 1;
+            currentPlayer = null;
+            currentQuestionIndex = null;
+            currentAnswer = null;
+            playerGuesses = {};
+            
+            // Reset player scores
+            players.forEach(p => p.score = 0);
+            
+            // Return to setup screen
+            setupScreen.style.display = 'block';
+            gameScreen.classList.add('hidden');
+        }
+        
+        function updatePlayersSetup() {
+            const playersSetup = document.getElementById('players-setup');
+            const playerCount = document.getElementById('player-count');
+            
+            playerCount.textContent = players.length;
+            playersSetup.innerHTML = '';
+            
+            players.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.marginBottom = '10px';
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = player.name;
+                input.style.padding = '8px';
+                input.style.borderRadius = '5px';
+                input.style.border = '1px solid #ccc';
+                input.style.flex = '1';
+                input.addEventListener('input', function() {
+                    player.name = this.value;
+                });
+                
+                div.appendChild(input);
+                
+                if (players.length > 4) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = '✕';
+                    removeBtn.className = 'btn btn-danger';
+                    removeBtn.style.padding = '5px 10px';
+                    removeBtn.addEventListener('click', function() {
+                        players = players.filter(p => p.id !== player.id);
+                        updatePlayersSetup();
+                        document.getElementById('add-player').disabled = false;
+                    });
+                    
+                    div.appendChild(removeBtn);
+                }
+                
+                playersSetup.appendChild(div);
+            });
+        }
+        
+        function startGame() {
+            setupScreen.style.display = 'none';
+            gameScreen.classList.remove('hidden');
+            
+            document.getElementById('current-round').textContent = currentRound;
+            document.getElementById('total-rounds').textContent = totalRounds;
+            
+            updateScoreboard();
+            showStage('spin');
+        }
+        
+        function updateScoreboard() {
+            const playersGrid = document.getElementById('players-grid');
+            playersGrid.innerHTML = '';
+            
+            players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.id === currentPlayer ? 'current' : ''}`;
+                
+                const nameEl = document.createElement('div');
+                nameEl.textContent = player.name;
+                nameEl.style.fontWeight = 'bold';
+                
+                const scoreEl = document.createElement('div');
+                scoreEl.textContent = player.score;
+                scoreEl.style.fontSize = '1.5rem';
+                
+                playerCard.appendChild(nameEl);
+                playerCard.appendChild(scoreEl);
+                
+                playersGrid.appendChild(playerCard);
+            });
+        }
+        
+        function showStage(stage) {
+            // Update stage display
+            document.getElementById('current-stage').textContent = 
+                stage === 'spin' ? 'סיבוב הבקבוק' :
+                stage === 'question' ? 'שאלה' :
+                stage === 'guess' ? 'ניחוש' :
+                stage === 'results' ? 'תוצאות' : '';
+            
+            // Hide all stages
+            spinStage.classList.add('hidden');
+            questionStage.classList.add('hidden');
+            guessStage.classList.add('hidden');
+            resultsStage.classList.add('hidden');
+            gameOver.classList.add('hidden');
+            
+            // Show current stage
+            if (stage === 'spin') spinStage.classList.remove('hidden');
+            else if (stage === 'question') questionStage.classList.remove('hidden');
+            else if (stage === 'guess') guessStage.classList.remove('hidden');
+            else if (stage === 'results') resultsStage.classList.remove('hidden');
+            else if (stage === 'gameOver') gameOver.classList.remove('hidden');
+        }
+        
+        function spinBottle() {
+            if (bottle.classList.contains('spinning')) return;
+            
+            bottle.classList.add('spinning');
+            
+            setTimeout(() => {
+                bottle.classList.remove('spinning');
+                
+                // Select random player
+                currentPlayer = Math.floor(Math.random() * players.length);
+                
+                // Select random question
+                currentQuestionIndex = Math.floor(Math.random() * questions.length);
+                
+                updateScoreboard();
+                showQuestion();
+            }, 3000);
+        }
+        
+        function showQuestion() {
+            if (currentPlayer === null || currentQuestionIndex === null) return;
+            
+            const question = questions[currentQuestionIndex];
+            const playerName = players[currentPlayer].name;
+            
+            // Replace [PLAYER] with player name
+            const questionText = question.q.replace('[PLAYER]', playerName);
+            
+            // Update UI
+            document.getElementById('current-player-name').textContent = playerName;
+            document.getElementById('question-text').textContent = questionText;
+            
+            // Clear answer input
+            document.getElementById('answer-input').value = '';
+            
+            // Show question stage
+            showStage('question');
+        }
+        
+        function submitAnswer() {
+            const answerInput = document.getElementById('answer-input');
+            const answer = answerInput.value.trim();
+            
+            if (answer === '') {
+                alert('אנא הקלד תשובה לפני שליחה');
+                return;
+            }
+            
+            // Store answer
+            currentAnswer = answer;
+            
+            // Reset guesses
+            playerGuesses = {};
+            
+            // Show guess stage
+            showGuessStage();
+        }
+        
+        function showGuessStage() {
+            if (currentPlayer === null || currentQuestionIndex === null || currentAnswer === null) return;
+            
+            const question = questions[currentQuestionIndex];
+            const playerName = players[currentPlayer].name;
+            
+            // Replace [PLAYER] with player name
+            const questionText = question.q.replace('[PLAYER]', playerName);
+            
+            // Update UI
+            document.getElementById('guess-player-name').textContent = playerName;
+            document.getElementById('guess-question').textContent = questionText;
+            
+            // Create choice buttons for each player to guess
+            const choicesDiv = document.getElementById('guess-choices');
+            choicesDiv.innerHTML = '';
+            
+            // Create a new array of choices for guessing
+            // It will include the correct answer and 3 random options
+            const correctAnswer = currentAnswer;
+            const availableOptions = [...question.options].filter(option => 
+                option.toLowerCase() !== correctAnswer.toLowerCase()
+            );
+            
+            // Shuffle the available options
+            for (let i = availableOptions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableOptions[i], availableOptions[j]] = [availableOptions[j], availableOptions[i]];
+            }
+            
+            // Take 3 random options
+            const randomOptions = availableOptions.slice(0, 3);
+            
+            // Combine with correct answer and shuffle
+            const guessChoices = [correctAnswer, ...randomOptions];
+            
+            // Shuffle the choices
+            for (let i = guessChoices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [guessChoices[i], guessChoices[j]] = [guessChoices[j], guessChoices[i]];
+            }
+            
+            // Find the new index of the correct answer after shuffling
+            const correctGuessIndex = guessChoices.indexOf(correctAnswer);
+            
+            players.forEach((player, playerIdx) => {
+                if (playerIdx === currentPlayer) return; // Skip current player
+                
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'card';
+                playerDiv.style.marginBottom = '10px';
+                
+                const playerName = document.createElement('div');
+                playerName.textContent = player.name;
+                playerName.style.fontWeight = 'bold';
+                playerName.style.marginBottom = '5px';
+                
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'choices-grid';
+                
+                guessChoices.forEach((choice, choiceIdx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn';
+                    btn.textContent = choice;
+                    btn.dataset.player = playerIdx;
+                    btn.dataset.choice = choiceIdx;
+                    btn.addEventListener('click', function() {
+                        // Highlight selected button
+                        buttonsDiv.querySelectorAll('.btn').forEach(b => b.classList.remove('btn-success'));
+                        this.classList.add('btn-success');
+                        
+                        // Store guess - we need to store if they guessed the correct answer
+                        const playerId = parseInt(this.dataset.player);
+                        const choiceId = parseInt(this.dataset.choice);
+                        playerGuesses[playerId] = choiceId === correctGuessIndex; // Store true if correct
+                        
+                        // Check if all players have guessed
+                        if (Object.keys(playerGuesses).length === players.length - 1) {
+                            // All players have guessed, show results
+                            setTimeout(() => showResults(guessChoices, correctGuessIndex), 500);
+                        }
+                    });
+                    
+                    buttonsDiv.appendChild(btn);
+                });
+                
+                playerDiv.appendChild(playerName);
+                playerDiv.appendChild(buttonsDiv);
+                choicesDiv.appendChild(playerDiv);
+            });
+            
+            // Show guess stage
+            showStage('guess');
+        }
+        
+        function showResults(guessChoices, correctGuessIndex) {
+            if (currentPlayer === null || currentQuestionIndex === null || currentAnswer === null) return;
+            
+            const question = questions[currentQuestionIndex];
+            const playerName = players[currentPlayer].name;
+            
+            // Replace [PLAYER] with player name
+            const questionText = question.q.replace('[PLAYER]', playerName);
+            
+            // Update UI
+            document.getElementById('result-question').textContent = questionText;
+            document.getElementById('result-player-name').textContent = playerName;
+            document.getElementById('player-answer-text').textContent = currentAnswer;
+            
+            // Calculate scores
+            let wrongGuesses = 0;
+            const guessesResults = document.getElementById('guesses-results');
+            guessesResults.innerHTML = '';
+            
+            Object.entries(playerGuesses).forEach(([playerId, isCorrect]) => {
+                const player = players[playerId];
+                
+                // Create result element
+                const resultDiv = document.createElement('div');
+                resultDiv.style.marginBottom = '5px';
+                
+                if (isCorrect) {
+                    resultDiv.innerHTML = `<strong>${player.name}</strong> ניחש נכון! (+10 נקודות)`;
+                    resultDiv.style.color = '#2ecc71';
+                    players[playerId].score += 10;
+                } else {
+                    resultDiv.innerHTML = `<strong>${player.name}</strong> ניחש לא נכון`;
+                    resultDiv.style.color = '#e74c3c';
+                    wrongGuesses++;
+                }
+                
+                guessesResults.appendChild(resultDiv);
+            });
+            
+            // Add points to current player for wrong guesses
+            if (wrongGuesses > 0) {
+                const pointsEarned = wrongGuesses * 5;
+                players[currentPlayer].score += pointsEarned;
+                document.getElementById('points-earned').textContent = 
+                    `${playerName} קיבל ${pointsEarned} נקודות על ${wrongGuesses} ניחושים שגויים!`;
+            } else {
+                document.getElementById('points-earned').textContent = 
+                    `${playerName} לא קיבל נקודות נוספות כי כולם ניחשו נכון.`;
+            }
+            
+            // Update scoreboard
+            updateScoreboard();
+            
+            // Show results stage
+            showStage('results');
+        }
+        
+        function nextRound() {
+            currentRound++;
+            
+            if (currentRound > totalRounds) {
+                endGame();
+                return;
+            }
+            
+            // Reset round state
+            currentPlayer = null;
+            currentQuestionIndex = null;
+            currentAnswer = null;
+            playerGuesses = {};
+            
+            // Update UI
+            document.getElementById('current-round').textContent = currentRound;
+            
+            // Go back to spin stage
+            showStage('spin');
+        }
+        
+        function endGame() {
+            // Sort players by score
+            const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+            
+            // Create final scores display
+            const finalScores = document.getElementById('final-scores');
+            finalScores.innerHTML = '';
+            
+            sortedPlayers.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'card';
+                playerDiv.style.marginBottom = '10px';
+                playerDiv.style.display = 'flex';
+                playerDiv.style.justifyContent = 'space-between';
+                playerDiv.style.alignItems = 'center';
+                
+                const rankSpan = document.createElement('span');
+                rankSpan.textContent = `#${index + 1}`;
+                rankSpan.style.fontSize = '1.5rem';
+                rankSpan.style.fontWeight = 'bold';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = player.name;
+                nameSpan.style.fontSize = '1.2rem';
+                
+                const scoreSpan = document.createElement('span');
+                scoreSpan.textContent = `${player.score} נקודות`;
+                scoreSpan.style.fontSize = '1.2rem';
+                scoreSpan.style.fontWeight = 'bold';
+                
+                playerDiv.appendChild(rankSpan);
+                playerDiv.appendChild(nameSpan);
+                playerDiv.appendChild(scoreSpan);
+                
+                finalScores.appendChild(playerDiv);
+            });
+            
+            // Show game over screen
+            showStage('gameOver');
+        }
+    </script>
+</body>
+</html>
